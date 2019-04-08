@@ -1,0 +1,73 @@
+#
+# by Brandon Frelich (b.frelich@f5.com)
+# This comes with no warranty whatsoever.
+#
+
+import argparse
+import requests
+import json
+import difflib
+
+requests.packages.urllib3.disable_warnings()
+
+parser = argparse.ArgumentParser(description='F5 BIG-IP License Manager Utilities')
+parser.add_argument('--bigiq_ip', help='F5 BIG-IQ IP Address', required=True)
+parser.add_argument('--bigiq_adm', help='F5 BIG-IQ admin username', required=True)
+parser.add_argument('--bigiq_pwd', help='F5 BIG-IQ admin password', required=True)
+parser.add_argument('--bigip_ip', help='F5 BIG-IP IP Address', required=True)
+parser.add_argument('--bigip_mac', help='F5 BIG-IP Unique MAC Address', required=True)
+parser.add_argument('--action', help='F5 license manager actions (unreachable_license', required=True)
+
+headers = {
+  'Content-Type': 'application/json'
+}
+
+####################################
+# Function: Generate X-F5-Auth-Token
+####################################
+def bigiq_authtoken (ip,username,password):
+  url = 'https://'+ip+'/mgmt/shared/authn/login'
+  payload = {
+    'username': username,
+    'password': password
+  }
+  resp = requests.post(url,headers=headers, data=json.dumps(payload), verify=False)
+  json_data =  json.loads(resp.text)
+  return json_data['token']['token'];
+
+
+###############################################
+# Function: License Unreachable BIG-IP Device
+###############################################
+#https://{{bigiq_mgmt}}/mgmt/cm/device/tasks/licensing/pool/member-management
+def unreachable_license(auth_token,ip,bip,bmac):
+  url = 'https://'+ip+'/mgmt/cm/device/tasks/licensing/pool/member-management'
+  headers = {
+    'Content-Type': 'application/json',
+    'X-F5-Auth-Token': auth_token
+    }
+    payload = {
+      "licensePoolName": "test",
+      "command": "assign",
+      "address": bip,
+      "assignmentType": "UNREACHABLE",
+      "macAddress": bmac,
+      "hypervisor": "vmware",
+      "tenant": "Sales BU#15"
+    }
+    resp = requests.post(url,headers=headers, data=json.dumps(payload), verify=False)
+    json_data = json.loads(resp.text)
+    print(json.dumps(resp.json(), indent=2))
+    return;
+
+args = vars(parser.parse_args())
+
+if args['action'] == 'unreachable_license':
+    biq_ip = args['bigiq_ip']
+    biq_adm = args['bigiq_adm']
+    biq_pwd = args['bigiq_pwd']
+    bip_ip = args['bigip_ip']
+    bip_mac = args['bigip_mac']
+
+	auth_token = bigiq_authtoken(biq_ip,biq_adm,biq_pwd)
+	unreachable_license(auth_token,biq_ip,bigip_ip,bigip_mac)
