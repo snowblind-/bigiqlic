@@ -1,5 +1,5 @@
 #
-# by Brandon (b.frelich@f5.com)
+# by Brandon Frelich (b.frelich@f5.com)
 # This comes with no warranty whatsoever.
 #
 
@@ -10,7 +10,7 @@ import difflib
 
 requests.packages.urllib3.disable_warnings()
 
-parser = argparse.ArgumentParser(description='F5 BIG-IP License Manager Utilities')
+parser = argparse.ArgumentParser(description='F5 BIG-IQ License Manager Utilities for Unreachable BIG-IP devices')
 parser.add_argument('--bigiq_ip', help='F5 BIG-IQ IP Address', required=True)
 parser.add_argument('--bigiq_adm', help='F5 BIG-IQ admin username', required=True)
 parser.add_argument('--bigiq_pwd', help='F5 BIG-IQ admin password', required=True)
