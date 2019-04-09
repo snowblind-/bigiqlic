@@ -99,6 +99,7 @@ def checkLicStatus(auth_token,ip,id):
 
   currentStep = "STARTED"
   status = "STARTED"
+  licenseText = ""
 
   while currentStep <> "FINISHED":
     resp = requests.get(url,headers=headers, verify=False) 
