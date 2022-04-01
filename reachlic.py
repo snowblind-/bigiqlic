@@ -42,7 +42,7 @@ def bigiq_authtoken (ip,username,password):
 
 
 ###############################################
-# Function: License Reachable BIG-IP Device
+# Function: License Unreachable BIG-IP Device
 ###############################################
 #https://{{bigiq_mgmt}}/mgmt/cm/device/tasks/licensing/pool/member-management
 def unreachable_license(auth_token,ip,bip,bmac,useMAC,tenantName,hypervisor,sku1,sku2):
@@ -51,22 +51,17 @@ def unreachable_license(auth_token,ip,bip,bmac,useMAC,tenantName,hypervisor,sku1
     'Content-Type': 'application/json',
     'X-F5-Auth-Token': auth_token
   }
-#  payload = {
-#      "licensePoolName": "byol-pool",
-#      "command": "assign",
-#      "address": bip,
-#      "assignmentType": "UNREACHABLE",
-#      "macAddress": bmac,
-#      "hypervisor": hypervisor,
-#      "tenant": tenantName,
-#      "skuKeyword1": sku1,
-#      "skuKeyword2": sku2
-#    }
   payload = {
-     "licensePoolName": "byol-pool",
-     "command": "assign",
-     "address": bip
-     }
+      "licensePoolName": "byol-pool",
+      "command": "assign",
+      "address": bip,
+      "assignmentType": "UNREACHABLE",
+      "macAddress": bmac,
+      "hypervisor": hypervisor,
+      "tenant": tenantName,
+      "skuKeyword1": sku1,
+      "skuKeyword2": sku2
+    }
   resp = requests.post(url,headers=headers, data=json.dumps(payload), verify=False)
   json_data = json.loads(resp.text)
   id = json_data['id']
@@ -76,6 +71,43 @@ def unreachable_license(auth_token,ip,bip,bmac,useMAC,tenantName,hypervisor,sku1
 
  # licTxt = checkLicStatus(auth_token,ip,id)
  # print licTxt
+
+#  if useMAC:
+#    f=open(bmac+'_bigip.license', 'w+')
+#    f.write(licTxt)
+#  else:
+#    f=open('bigip.license', 'w')
+#    f.write(licTxt)
+  return
+
+###############################################
+# Function: License Reachable BIG-IP Device
+###############################################
+#https://{{bigiq_mgmt}}/mgmt/cm/device/tasks/licensing/pool/member-management
+def managed_license(auth_token,ip,bip,tenantName,sku1,sku2):
+  url = 'https://'+ip+'/mgmt/cm/device/tasks/licensing/pool/member-management'
+  headers = {
+    'Content-Type': 'application/json',
+    'X-F5-Auth-Token': auth_token
+  }
+
+  payload = {
+     "licensePoolName": "byol-pool-utility",
+     "command": "assign",
+     "unitOfMeasure": "yearly",
+     "address": bip,
+     "skuKeyword1": sku1,
+     "skuKeyword2": sku2
+  }
+  resp = requests.post(url,headers=headers, data=json.dumps(payload), verify=False)
+  json_data = json.loads(resp.text)
+  id = json_data['id']
+ # hypervisor = json_data['hypervisor']
+ # print id
+ # print hypervisor
+
+  licTxt = checkLicStatus(auth_token,ip,id)
+  print licTxt
 
 #  if useMAC:
 #    f=open(bmac+'_bigip.license', 'w+')
@@ -119,7 +151,7 @@ def checkLicStatus(auth_token,ip,id):
       currentStep = "FINISHED"
     print(currentStep)
 
-#  if not licenseText:
+#not licenseText:
 #      licenseText = json_data['licenseText']
 #
 #  return licenseText
@@ -138,6 +170,16 @@ if args['action'] == 'unreachable_license':
     hyper = args['hyper']
     sku1 = args['sku1']
     sku2 = args['sku2']
+    auth_token = bigiq_authtoken(biq_ip,biq_adm,biq_pwd)
+    unreachable_license(auth_token,biq_ip,bip_ip,bip_mac,use_mac,tenant_desc,hyper,sku1,sku2)
 
-auth_token = bigiq_authtoken(biq_ip,biq_adm,biq_pwd)
-unreachable_license(auth_token,biq_ip,bip_ip,bip_mac,use_mac,tenant_desc,hyper,sku1,sku2)
+if args['action'] == 'managed_license':
+    biq_ip = args['bigiq_ip']
+    biq_adm = args['bigiq_adm']
+    biq_pwd = args['bigiq_pwd']
+    bip_ip = args['bigip_ip']
+    tenant_desc = args['tenant_desc']
+    sku1 = args['sku1']
+    sku2 = args['sku2']
+    auth_token = bigiq_authtoken(biq_ip,biq_adm,biq_pwd)
+    managed_license(auth_token,biq_ip,bip_ip,tenant_desc,sku1,sku2)
