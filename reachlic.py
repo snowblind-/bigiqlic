@@ -22,6 +22,7 @@ parser.add_argument('--hyper', help='The host hypervisor', default="Xen", requir
 parser.add_argument('--sku1', help='BIG-IP License SKU Keyword #1 of two allowed', default="", required=False)
 parser.add_argument('--sku2', help='BIG-IP License SKU Keyword #2 of two allowed', default="", required=False)
 parser.add_argument('--action', help='F5 license manager actions (unreachable_license', required=True)
+parser.add_argument('--pool', help='BIG-IQ license pool name', default="my-pool", required=False)
 
 headers = {
   'Content-Type': 'application/json'
@@ -45,14 +46,14 @@ def bigiq_authtoken (ip,username,password):
 # Function: License Unreachable BIG-IP Device
 ###############################################
 #https://{{bigiq_mgmt}}/mgmt/cm/device/tasks/licensing/pool/member-management
-def unreachable_license(auth_token,ip,bip,bmac,useMAC,tenantName,hypervisor,sku1,sku2):
+def unreachable_license(auth_token,ip,bip,bmac,useMAC,tenantName,hypervisor,sku1,sku2,poolName):
   url = 'https://'+ip+'/mgmt/cm/device/tasks/licensing/pool/member-management'
   headers = {
     'Content-Type': 'application/json',
     'X-F5-Auth-Token': auth_token
   }
   payload = {
-      "licensePoolName": "byol-pool",
+      "licensePoolName": poolName,
       "command": "assign",
       "address": bip,
       "assignmentType": "UNREACHABLE",
@@ -84,7 +85,7 @@ def unreachable_license(auth_token,ip,bip,bmac,useMAC,tenantName,hypervisor,sku1
 # Function: License Reachable BIG-IP Device
 ###############################################
 #https://{{bigiq_mgmt}}/mgmt/cm/device/tasks/licensing/pool/member-management
-def managed_license(auth_token,ip,bip,tenantName,sku1,sku2):
+def managed_license(auth_token,ip,bip,tenantName,sku1,sku2,poolName):
   url = 'https://'+ip+'/mgmt/cm/device/tasks/licensing/pool/member-management'
   headers = {
     'Content-Type': 'application/json',
@@ -92,7 +93,8 @@ def managed_license(auth_token,ip,bip,tenantName,sku1,sku2):
   }
 
   payload = {
-     "licensePoolName": "byol-pool-utility",
+     #"licensePoolName": "byol-pool-utility",
+     "licensePoolName": poolName,
      "command": "assign",
      "unitOfMeasure": "yearly",
      "address": bip,
@@ -167,11 +169,12 @@ if args['action'] == 'unreachable_license':
     bip_mac = args['bigip_mac']
     use_mac = args['use_mac']
     tenant_desc = args['tenant_desc']
+    pool = args['pool']
     hyper = args['hyper']
     sku1 = args['sku1']
     sku2 = args['sku2']
     auth_token = bigiq_authtoken(biq_ip,biq_adm,biq_pwd)
-    unreachable_license(auth_token,biq_ip,bip_ip,bip_mac,use_mac,tenant_desc,hyper,sku1,sku2)
+    unreachable_license(auth_token,biq_ip,bip_ip,bip_mac,use_mac,tenant_desc,hyper,sku1,sku2,pool)
 
 if args['action'] == 'managed_license':
     biq_ip = args['bigiq_ip']
@@ -179,7 +182,8 @@ if args['action'] == 'managed_license':
     biq_pwd = args['bigiq_pwd']
     bip_ip = args['bigip_ip']
     tenant_desc = args['tenant_desc']
+    pool = args['pool']
     sku1 = args['sku1']
     sku2 = args['sku2']
     auth_token = bigiq_authtoken(biq_ip,biq_adm,biq_pwd)
-    managed_license(auth_token,biq_ip,bip_ip,tenant_desc,sku1,sku2)
+    managed_license(auth_token,biq_ip,bip_ip,tenant_desc,sku1,sku2,pool)
