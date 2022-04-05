@@ -15,13 +15,15 @@ parser.add_argument('--bigiq_ip', help='F5 BIG-IQ IP Address', required=True)
 parser.add_argument('--bigiq_adm', help='F5 BIG-IQ admin username', required=True)
 parser.add_argument('--bigiq_pwd', help='F5 BIG-IQ admin password', required=True)
 parser.add_argument('--bigip_ip', help='F5 BIG-IP IP Address', required=True)
+parser.add_argument('--bigip_user', help='F5 BIG-IP administrator level user', default="admin", required=False)
+parser.add_argument('--bigip_pass', help='F5 BIG-IP administrator level password', default="admin", required=False)
 parser.add_argument('--bigip_mac', help='F5 BIG-IP Unique MAC Address', required=False)
 parser.add_argument("--use_mac", default=False, help='Use the BIG-IP MAC Address for the license filename', action='store_true', required=False)
 parser.add_argument('--tenant_desc', help='The Machine Tenant ID/Description in double quotes', default="", required=False)
 parser.add_argument('--hyper', help='The host hypervisor', default="Xen", required=False)
 parser.add_argument('--sku1', help='BIG-IP License SKU Keyword #1 of two allowed', default="", required=False)
 parser.add_argument('--sku2', help='BIG-IP License SKU Keyword #2 of two allowed', default="", required=False)
-parser.add_argument('--action', help='F5 license manager actions (unreachable_license', required=True)
+parser.add_argument('--action', help='F5 license manager actions (unreachable_license, unmanaged_license, managed_license', required=True)
 parser.add_argument('--pool', help='BIG-IQ license pool name', default="my-pool", required=False)
 
 headers = {
@@ -82,7 +84,7 @@ def unreachable_license(auth_token,ip,bip,bmac,useMAC,tenantName,hypervisor,sku1
   return
 
 ###############################################
-# Function: License Reachable BIG-IP Device
+# Function: License Managed BIG-IP Device
 ###############################################
 #https://{{bigiq_mgmt}}/mgmt/cm/device/tasks/licensing/pool/member-management
 def managed_license(auth_token,ip,bip,tenantName,sku1,sku2,poolName):
@@ -118,6 +120,47 @@ def managed_license(auth_token,ip,bip,tenantName,sku1,sku2,poolName):
 #    f=open('bigip.license', 'w')
 #    f.write(licTxt)
   return
+
+###############################################
+# Function: License Unmanaged BIG-IP Device
+###############################################
+#https://{{bigiq_mgmt}}/mgmt/cm/device/tasks/licensing/pool/member-management
+def unmanaged_license(auth_token,ip,bip,bipuser,bippass,tenantName,sku1,sku2,poolName):
+  url = 'https://'+ip+'/mgmt/cm/device/tasks/licensing/pool/member-management'
+  headers = {
+    'Content-Type': 'application/json',
+    'X-F5-Auth-Token': auth_token
+  }
+
+  payload = {
+     #"licensePoolName": "byol-pool-utility",
+     "licensePoolName": poolName,
+     "command": "assign",
+     "unitOfMeasure": "yearly",
+     "address": bip,
+     "user": bipuser,
+     "pass": bippass,
+     "skuKeyword1": sku1,
+     "skuKeyword2": sku2
+  }
+  resp = requests.post(url,headers=headers, data=json.dumps(payload), verify=False)
+  json_data = json.loads(resp.text)
+  id = json_data['id']
+ # hypervisor = json_data['hypervisor']
+ # print id
+ # print hypervisor
+
+  licTxt = checkLicStatus(auth_token,ip,id)
+  print licTxt
+
+#  if useMAC:
+#    f=open(bmac+'_bigip.license', 'w+')
+#    f.write(licTxt)
+#  else:
+#    f=open('bigip.license', 'w')
+#    f.write(licTxt)
+  return
+
 
 ###################################################
 # Function: Poll BIG-IQ for license issuance status
@@ -187,3 +230,18 @@ if args['action'] == 'managed_license':
     sku2 = args['sku2']
     auth_token = bigiq_authtoken(biq_ip,biq_adm,biq_pwd)
     managed_license(auth_token,biq_ip,bip_ip,tenant_desc,sku1,sku2,pool)
+
+if args['action'] == 'unmanaged_license':
+    biq_ip = args['bigiq_ip']
+    biq_adm = args['bigiq_adm']
+    biq_pwd = args['bigiq_pwd']
+    bip_ip = args['bigip_ip']
+    bip_admin = args['bigip_ip']
+    bip_pass = args['bigip_user']
+    bip_pass = args['bigip_pass']
+    tenant_desc = args['tenant_desc']
+    pool = args['pool']
+    sku1 = args['sku1']
+    sku2 = args['sku2']
+    auth_token = bigiq_authtoken(biq_ip,biq_adm,biq_pwd)
+    unmanaged_license(auth_token,biq_ip,bip_ip,bip_admin,bip_pass,tenant_desc,sku1,sku2,pool)
