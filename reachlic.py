@@ -95,7 +95,6 @@ def managed_license(auth_token,ip,bip,tenantName,sku1,sku2,poolName):
   }
 
   payload = {
-     #"licensePoolName": "byol-pool-utility",
      "licensePoolName": poolName,
      "command": "assign",
      "unitOfMeasure": "yearly",
@@ -139,7 +138,7 @@ def unmanaged_license(auth_token,ip,bip,bipuser,bippass,tenantName,sku1,sku2,poo
      "unitOfMeasure": "yearly",
      "address": bip,
      "user": bipuser,
-     "pass": bippass,
+     "password": bippass,
      "skuKeyword1": sku1,
      "skuKeyword2": sku2
   }
@@ -237,11 +236,11 @@ if args['action'] == 'unmanaged_license':
     biq_pwd = args['bigiq_pwd']
     bip_ip = args['bigip_ip']
     bip_admin = args['bigip_ip']
-    bip_pass = args['bigip_user']
+    bip_user = args['bigip_user']
     bip_pass = args['bigip_pass']
     tenant_desc = args['tenant_desc']
     pool = args['pool']
     sku1 = args['sku1']
     sku2 = args['sku2']
     auth_token = bigiq_authtoken(biq_ip,biq_adm,biq_pwd)
-    unmanaged_license(auth_token,biq_ip,bip_ip,bip_admin,bip_pass,tenant_desc,sku1,sku2,pool)
+    unmanaged_license(auth_token,biq_ip,bip_ip,bip_user,bip_pass,tenant_desc,sku1,sku2,pool)
